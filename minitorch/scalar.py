@@ -25,8 +25,7 @@ ScalarLike = Union[float, int, "Scalar"]
 
 @dataclass
 class ScalarHistory:
-    """
-    `ScalarHistory` stores the history of `Function` operations that was
+    """`ScalarHistory` stores the history of `Function` operations that was
     used to construct the current Variable.
 
     Attributes:
@@ -48,8 +47,7 @@ _var_count = 0
 
 
 class Scalar:
-    """
-    A reimplementation of scalar values for autodifferentiation
+    """A reimplementation of scalar values for autodifferentiation
     tracking. Scalar Variables behave as close as possible to standard
     Python numbers while also tracking the operations that led to the
     number's creation. They can only be manipulated by
@@ -92,25 +90,25 @@ class Scalar:
         return Mul.apply(b, Inv.apply(self))
 
     def __add__(self, b: ScalarLike) -> Scalar:
-        raise NotImplementedError("Need to include this file from past assignment.")
+        return Add.apply(self, b)
 
     def __bool__(self) -> bool:
         return bool(self.data)
 
     def __lt__(self, b: ScalarLike) -> Scalar:
-        raise NotImplementedError("Need to include this file from past assignment.")
+        return LT.apply(self, b)
 
     def __gt__(self, b: ScalarLike) -> Scalar:
-        raise NotImplementedError("Need to include this file from past assignment.")
+        return LT.apply(b, self)
 
     def __eq__(self, b: ScalarLike) -> Scalar:  # type: ignore[override]
-        raise NotImplementedError("Need to include this file from past assignment.")
+        return EQ.apply(self, b)
 
     def __sub__(self, b: ScalarLike) -> Scalar:
-        raise NotImplementedError("Need to include this file from past assignment.")
+        return Add.apply(self, Neg.apply(b))
 
     def __neg__(self) -> Scalar:
-        raise NotImplementedError("Need to include this file from past assignment.")
+        return Neg.apply(self)
 
     def __radd__(self, b: ScalarLike) -> Scalar:
         return self + b
@@ -119,26 +117,26 @@ class Scalar:
         return self * b
 
     def log(self) -> Scalar:
-        raise NotImplementedError("Need to include this file from past assignment.")
+        return Log.apply(self)
 
     def exp(self) -> Scalar:
-        raise NotImplementedError("Need to include this file from past assignment.")
+        return Exp.apply(self)
 
     def sigmoid(self) -> Scalar:
-        raise NotImplementedError("Need to include this file from past assignment.")
+        return Sigmoid.apply(self)
 
     def relu(self) -> Scalar:
-        raise NotImplementedError("Need to include this file from past assignment.")
+        return ReLU.apply(self)
 
     # Variable elements for backprop
 
     def accumulate_derivative(self, x: Any) -> None:
-        """
-        Add `val` to the the derivative accumulated on this variable.
+        """Add `val` to the the derivative accumulated on this variable.
         Should only be called during autodifferentiation on leaf variables.
 
         Args:
             x: value to be accumulated
+
         """
         assert self.is_leaf(), "Only leaf variables can have derivatives."
         if self.derivative is None:
@@ -163,15 +161,21 @@ class Scalar:
         assert h.last_fn is not None
         assert h.ctx is not None
 
-        raise NotImplementedError("Need to include this file from past assignment.")
+        local_derivatives = h.last_fn._backward(h.ctx, d_output)
+
+        return [
+            (inp, deriv)
+            for inp, deriv in zip(h.inputs, local_derivatives)
+            if not inp.is_constant()
+        ]
 
     def backward(self, d_output: Optional[float] = None) -> None:
-        """
-        Calls autodiff to fill in the derivatives for the history of this object.
+        """Calls autodiff to fill in the derivatives for the history of this object.
 
         Args:
             d_output (number, opt): starting derivative to backpropagate through the model
                                    (typically left out, and assumed to be 1.0).
+
         """
         if d_output is None:
             d_output = 1.0
@@ -179,13 +183,13 @@ class Scalar:
 
 
 def derivative_check(f: Any, *scalars: Scalar) -> None:
-    """
-    Checks that autodiff works on a python function.
+    """Checks that autodiff works on a python function.
     Asserts False if derivative is incorrect.
 
     Parameters:
         f : function from n-scalars to 1-scalar.
         *scalars  : n input scalar values.
+
     """
     out = f(*scalars)
     out.backward()
