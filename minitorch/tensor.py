@@ -1,6 +1,4 @@
-"""
-Implementation of the core Tensor object for autodifferentiation.
-"""
+"""Implementation of the core Tensor object for autodifferentiation."""
 
 from __future__ import annotations
 
@@ -47,8 +45,7 @@ if TYPE_CHECKING:
 
 @dataclass
 class History:
-    """
-    `History` stores the history of `Function` operations that was
+    """`History` stores the history of `Function` operations that was
     used to construct the current Variable.
     """
 
@@ -61,8 +58,7 @@ _tensor_count = 0
 
 
 class Tensor:
-    """
-    Tensor is a generalization of Scalar in that it is a Variable that
+    """Tensor is a generalization of Scalar in that it is a Variable that
     handles multidimensional arrays.
     """
 
@@ -103,39 +99,35 @@ class Tensor:
         return self.history is not None
 
     def to_numpy(self) -> npt.NDArray[np.float64]:
-        """
-        Returns:
-             Converted to numpy array
+        """Returns:
+        Converted to numpy array
         """
         return self.contiguous()._tensor._storage.reshape(self.shape)
 
     # Properties
     @property
     def shape(self) -> UserShape:
-        """
-        Returns:
-             shape of the tensor
+        """Returns:
+        shape of the tensor
         """
         return self._tensor.shape
 
     @property
     def size(self) -> int:
-        """
-        Returns:
-             int : size of the tensor
+        """Returns:
+        int : size of the tensor
         """
         return self._tensor.size
 
     @property
     def dims(self) -> int:
-        """
-        Returns:
-             int : dimensionality of the tensor
+        """Returns:
+        int : dimensionality of the tensor
         """
         return self._tensor.dims
 
     def _ensure_tensor(self, b: TensorLike) -> Tensor:
-        "Turns a python number into a tensor with the same backend."
+        """Turns a python number into a tensor with the same backend."""
         if isinstance(b, (int, float)):
             c = Tensor.make([b], (1,), backend=self.backend)
         else:
@@ -160,7 +152,7 @@ class Tensor:
         return Mul.apply(self._ensure_tensor(b), Inv.apply(self))
 
     def __matmul__(self, b: Tensor) -> Tensor:
-        "Not used until Module 3"
+        """Not used until Module 3"""
         return MatMul.apply(self, b)
 
     def __lt__(self, b: TensorLike) -> Tensor:
@@ -259,15 +251,13 @@ class Tensor:
         strides: Optional[UserStrides] = None,
         backend: Optional[TensorBackend] = None,
     ) -> Tensor:
-        "Create a new tensor from data"
+        """Create a new tensor from data"""
         return Tensor(TensorData(storage, shape, strides), backend=backend)
 
     def expand(self, other: Tensor) -> Tensor:
-        """
-        Method used to allow for backprop over broadcasting.
+        """Method used to allow for backprop over broadcasting.
         This method is called when the output of `backward`
         is a different size than the input of `forward`.
-
 
         Parameters:
             other : backward tensor (must broadcast with self)
@@ -276,7 +266,6 @@ class Tensor:
             Expanded version of `other` with the right derivatives
 
         """
-
         # Case 1: Both the same shape.
         if self.shape == other.shape:
             return other
@@ -321,12 +310,12 @@ class Tensor:
     # Variable elements for backprop
 
     def accumulate_derivative(self, x: Any) -> None:
-        """
-        Add `val` to the the derivative accumulated on this variable.
+        """Add `val` to the the derivative accumulated on this variable.
         Should only be called during autodifferentiation on leaf variables.
 
         Args:
             x : value to be accumulated
+
         """
         assert self.is_leaf(), "Only leaf variables can have derivatives."
         if self.grad is None:
@@ -367,7 +356,5 @@ class Tensor:
         backpropagate(self, grad_output)
 
     def zero_grad_(self) -> None:  # pragma: no cover
-        """
-        Reset the derivative on this variable.
-        """
+        """Reset the derivative on this variable."""
         self.grad = None
